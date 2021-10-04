@@ -1,0 +1,18 @@
+---
+kind: pipeline
+name: test-a5
+type: docker
+steps:
+  - name: iverilog
+    image: nchandra75/iverilog
+    commands:
+      - yosys synth.ys
+      - iverilog -DTESTDIR=\"test\t1\" -o cpu_tb -c program_file_synth.txt
+      - ./cpu_tb
+      - iverilog -DTESTDIR=\"test\t2\" -o cpu_tb -c program_file_synth.txt
+      - ./cpu_tb
+      - iverilog -DTESTDIR=\"test\t3\" -o cpu_tb -c program_file_synth.txt
+      - ./cpu_tb
+trigger:
+    event:
+        - tag
