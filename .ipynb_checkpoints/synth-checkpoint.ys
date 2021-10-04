@@ -1,3 +1,0 @@
-read_verilog cpu.v alu.v regfile.v 
-synth_xilinx -top cpu
-write_verilog cpu_synth.v
