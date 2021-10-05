@@ -93,15 +93,23 @@ module cpu (
             rv2_f = immediate;
         
         if(idata[6:0] == LUI) begin
+            dwe_c = 4'b0000;
+            dwdata_c = 32'b0;
             rwdata = immediate;                
         end
         else if(idata[6:0] == AUIPC) begin
+            dwe_c = 4'b0000;
+            dwdata_c = 32'b0;
             rwdata = immediate + iaddr;
         end
         else if(idata[6:0] == JALR || idata[6:0] == JAL) begin
+            dwe_c = 4'b0000;
+            dwdata_c = 32'b0;
             rwdata = iaddr + 4;
         end
         else if (idata[6:0] == LXX) begin
+            dwe_c = 4'b0000;
+            dwdata_c = 32'b0;
             case(idata[14:12])
                 // LB
                 3'b000: begin
@@ -207,6 +215,7 @@ module cpu (
         end
         else begin
             dwe_c = 4'b0000;
+            dwdata_c = 32'b0;
 
             if(MemtoReg == 1'b0)
                 rwdata = ALUOut;
@@ -220,7 +229,7 @@ module cpu (
     always @(posedge clk) begin
         //$display("%x, %x, %b, %x, %x\n", iaddr, idata[14:12], idata[6:0], rv1, rv2);
         if (reset) begin
-            iaddr <= -4;  //To fix the problem that arises when reset is removed at clk edge, don't know why it works :P
+            iaddr <= 0;  //To fix the problem that arises when reset is removed at clk edge, don't know why it works :P
         end 
         else begin 
             case (idata[6:0])
