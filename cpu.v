@@ -9,9 +9,12 @@ module cpu (
     output [3:0] dwe
 );
     reg [31:0] iaddr;
-    reg [31:0] daddr;
-    reg [31:0] dwdata;
-    reg [3:0]  dwe;
+    wire [31:0] daddr;
+    wire [31:0] dwdata;
+    wire [3:0]  dwe;
+
+    reg [31:0] dwdata_c;
+    reg [3:0]  dwe_c;
 
     //Register File ports
     wire rwe;
@@ -77,9 +80,13 @@ module cpu (
         .rv2(rv2)
     );
 
+    // Async resets
+    assign dwdata = (reset)?0:dwdata_c;
+    assign dwe = (reset)?0:dwe_c;
+    assign daddr = (reset)?0:ALUOut;
+
     //Combinatorial assignments
     always @(*) begin
-        daddr = ALUOut;
         if(ALUSrc == 1'b0)
             rv2_f = rv2;
         else
@@ -154,53 +161,57 @@ module cpu (
             endcase
         end
         else if (idata[6:0] == SXX) begin
-            
+            rwdata = 32'b0;
             case(idata[14:12])
                 // SB
                 3'b000: begin
-                    dwdata = {4{rv2[7:0]}};     // repeat the last byte 4 times as write data
+                    dwdata_c = {4{rv2[7:0]}};     // repeat the last byte 4 times as write data
                     case(daddr[1:0])
                         2'b00:
-                            dwe = 4'b0001;
+                            dwe_c = 4'b0001;
                         2'b01:
-                            dwe = 4'b0010;
+                            dwe_c = 4'b0010;
                         2'b10:
-                            dwe = 4'b0100;
+                            dwe_c = 4'b0100;
                         2'b11:
-                            dwe = 4'b1000;
+                            dwe_c = 4'b1000;
                     endcase
                 end
                 // SH
                 3'b001: begin
-                    dwdata = {2{rv2[15:0]}};     // repeat last half-word 2 times as write data
+                    dwdata_c = {2{rv2[15:0]}};     // repeat last half-word 2 times as write data
                     case(daddr[1:0])
                         2'b00:
-                            dwe = 4'b0011;
+                            dwe_c = 4'b0011;
                         2'b10:
-                            dwe = 4'b1100;
+                            dwe_c = 4'b1100;
                         default:
-                            dwe = 4'b0000;
+                            dwe_c = 4'b0000;
                     endcase
                 end
                 // SW
                 3'b010: begin
-                    dwdata = rv2;
+                    dwdata_c = rv2;
                     case(daddr[1:0])
                         2'b00:
-                            dwe = 4'b1111;
+                            dwe_c = 4'b1111;
                         default:
-                            dwe = 4'b0000;
+                            dwe_c = 4'b0000;
                     endcase
                 end
-                default:
-                    dwe = 4'b0000;
+                default: begin
+                    dwdata_c = 32'b0;
+                    dwe_c = 4'b0000;
+                end
             endcase
         end
         else begin
-            dwe = 4'b0000;
+            dwe_c = 4'b0000;
 
             if(MemtoReg == 1'b0)
                 rwdata = ALUOut;
+            else
+                rwdata = dwdata;
             
         end
 
@@ -209,10 +220,7 @@ module cpu (
     always @(posedge clk) begin
         //$display("%x, %x, %b, %x, %x\n", iaddr, idata[14:12], idata[6:0], rv1, rv2);
         if (reset) begin
-            iaddr <= 0;
-            daddr <= 0;
-            dwdata <= 0;
-            dwe <= 0;
+            iaddr <= -4;  //To fix the problem that arises when reset is removed at clk edge, don't know why it works :P
         end 
         else begin 
             case (idata[6:0])
