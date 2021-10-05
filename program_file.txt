@@ -2,3 +2,7 @@ cpu.v
 cpu_tb.v
 dmem.v
 imem.v
+alu.v
+control.v
+immGen.v
+regfile.v

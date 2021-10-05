@@ -2,4 +2,8 @@ cpu_synth.v
 cpu_tb.v
 dmem.v
 imem.v
+alu.v
+control.v
+immGen.v
+regfile.v
 /usr/share/yosys/xilinx/cells_sim.v
