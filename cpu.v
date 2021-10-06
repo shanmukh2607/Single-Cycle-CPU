@@ -9,6 +9,7 @@ module cpu (
     output [3:0] dwe
 );
     reg [31:0] iaddr;
+    reg reset_check;
     wire [31:0] daddr;
     wire [31:0] dwdata;
     wire [3:0]  dwe;
@@ -229,32 +230,40 @@ module cpu (
     always @(posedge clk) begin
         //$display("%x, %x, %b, %x, %x\n", iaddr, idata[14:12], idata[6:0], rv1, rv2);
         if (reset) begin
-            iaddr <= 0;  //To fix the problem that arises when reset is removed at clk edge, don't know why it works :P
+            iaddr <= 0;
+            reset_check <= 1;
         end 
-        else begin 
-            case (idata[6:0])
-                JAL:
-                    iaddr <= immediate + iaddr;
-                JALR:
-                    iaddr <= ((immediate+rv1) >> 1) << 1; //Set LSB as 0
-                BXX:
-                    if(idata[14:12] == 3'b000)
-                        if(ALUOut == 32'b0) //BEQ
-                            iaddr <= immediate + iaddr;
-                        else
-                            iaddr <= iaddr + 4;
-                    else if(idata[14:12] == 3'b001)
-                        if(ALUOut != 32'b0) //BNE
-                            iaddr <= immediate + iaddr;
-                        else
-                            iaddr <= iaddr + 4;
-                    else if(idata[12] != ALUOut[0])
+        else begin
+            if (reset_check) begin
+                reset_check <= 0;
+                iaddr <= 0;
+            end
+            else begin
+                reset_check <= 0;
+                case (idata[6:0])
+                    JAL:
                         iaddr <= immediate + iaddr;
-                    else
+                    JALR:
+                        iaddr <= ((immediate+rv1) >> 1) << 1; //Set LSB as 0
+                    BXX:
+                        if(idata[14:12] == 3'b000)
+                            if(ALUOut == 32'b0) //BEQ
+                                iaddr <= immediate + iaddr;
+                            else
+                                iaddr <= iaddr + 4;
+                        else if(idata[14:12] == 3'b001)
+                            if(ALUOut != 32'b0) //BNE
+                                iaddr <= immediate + iaddr;
+                            else
+                                iaddr <= iaddr + 4;
+                        else if(idata[12] != ALUOut[0])
+                            iaddr <= immediate + iaddr;
+                        else
+                            iaddr <= iaddr + 4;
+                    default: 
                         iaddr <= iaddr + 4;
-                default: 
-                    iaddr <= iaddr + 4;
-            endcase
+                endcase
+            end
         end
     end
 
