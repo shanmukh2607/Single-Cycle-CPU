@@ -2,3 +2,12 @@ cpu.v
 cpu_tb.v
 dmem.v
 imem.v
+decoder.v
+control.v
+alu32.v 
+regfile.v 
+
+
+
+
+
