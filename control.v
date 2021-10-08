@@ -37,20 +37,26 @@ reg rwe;
 */
 
     always @* begin
-    PC_next = PC_curr + 4;   // default: Increment PC by 4, write disabled
-    dwe = 4'b0;
-    rwe = 0;
+   
     if(op[3] == 1'b1) begin   // ALU operation
         alu_op = op;
         reg_wdata = rvout;
         rwe = 1;
+        daddr = 32'b0;
+        dwe = 0;
+        dwdata = 0;
+        PC_next = PC_curr + 4;
+        
     end
     else if (op[4:3] == 2'b10) begin    // if load or store instr
         alu_op = 6'b001000;   // op(addi)
         daddr = rvout;
+        PC_next = PC_curr + 4;
         case(op)
             6'b010000 :   begin
                 rwe = 1;
+                dwe = 0;
+                dwdata = 0;
                 case(daddr[1:0])    // last two bits of address indicate the byte to be addressed
                     2'b00:  reg_wdata = {{24{drdata[7]}}, drdata[7:0]};   //Byte 0
                     2'b01:  reg_wdata = {{24{drdata[15]}}, drdata[15:8]}; //Byte 1
@@ -61,7 +67,8 @@ reg rwe;
             end               //LB
             6'b010001 :   begin
                 rwe = 1;
-
+                dwe = 0;
+                dwdata = 0;
                 case(daddr[1:0])    // last two bits of address indicate the byte to be addressed
                     2'b00:  begin reg_wdata = {{16{drdata[15]}}, drdata[15:0]};end //HW 0
                     2'b10:  begin reg_wdata = {{16{drdata[31]}}, drdata[31:16]};end //HW 1
@@ -70,6 +77,8 @@ reg rwe;
             end             //LH
             6'b010010 :   begin
                 rwe = 1;
+                dwe = 0;
+                dwdata = 0;
                 case(daddr[1:0])    // last two bits of address indicate the byte to be addressed
                     2'b00: begin  reg_wdata = drdata;end
                     default: reg_wdata = 32'b0;
@@ -77,6 +86,8 @@ reg rwe;
             end           //LW
             6'b010100 :   begin
                 rwe = 1;
+                dwe = 0;
+                dwdata = 0;
                 case(daddr[1:0])    // last two bits of address indicate the byte to be addressed
                     2'b00:  reg_wdata = {24'b0, drdata[7:0]};   //Byte 0
                     2'b01:  reg_wdata = {24'b0, drdata[15:8]};  //Byte 1
@@ -87,6 +98,8 @@ reg rwe;
             end         //LBU
             6'b010101 :   begin
                 rwe = 1;
+                dwe = 0;
+                dwdata = 0;
                 case(daddr[1:0])    // last two bits of address indicate the byte to be addressed
                     2'b00: begin  reg_wdata = {16'b0, drdata[15:0]}; end//HW 0
                     2'b10:  begin reg_wdata = {16'b0, drdata[31:16]};end //HW 1
@@ -94,7 +107,10 @@ reg rwe;
                 endcase
             end         //LHU
             6'b110000 :  begin
+                 rwe = 0;
+                 reg_wdata = 32'b0;
                 case(daddr[1:0])
+                   
                     2'b00:  begin dwe = 4'b0001;
                         dwdata = r_rv2; end
                     2'b01:  begin dwe = 4'b0010;
@@ -108,6 +124,8 @@ reg rwe;
                 endcase
             end         //SB
             6'b110001 :  begin
+                rwe = 0;
+                reg_wdata = 32'b0;
                 case(daddr[1:0])
                     2'b00:  begin dwe = 4'b0011;
                         dwdata = r_rv2; end
@@ -118,6 +136,8 @@ reg rwe;
                 endcase
             end     //SH
             6'b110010 :   begin
+                rwe = 0;
+                reg_wdata = 32'b0;
                 case(daddr[1:0])
                     2'b00:  begin dwe = 4'b1111;
                         dwdata = r_rv2; end
@@ -126,48 +146,61 @@ reg rwe;
                 endcase
             end     //SW
             
-            default: begin dwdata = 32'bx;
+            default: begin
+                rwe = 0;
+                reg_wdata = 32'b0;
+                dwdata = 32'bx;
                 dwe = 32'bx;end
 
         endcase
     end // end else
     else if (op[5:3] == 3'b100) begin   // Conditional Branch
+        rwe = 0;
+         reg_wdata = 32'b0;
+          dwdata = 32'bx;
+          dwe = 32'bx;
+            daddr = 0;
+        
         case (op[2:0])
             3'b000 : begin
                 alu_op = 6'b111000; //op(SUB)
                 if (rvout == 0)begin  PC_next = PC_curr + imm_val;end
-                    else  begin PC_next = PC_curr;end
+                    else  begin PC_next = PC_curr+4;end
             end   //BEQ
             3'b001 : begin
                 alu_op = 6'b111000; //op(SUB)
                 if(rvout != 0) begin PC_next = PC_curr + imm_val;end
-                else  begin PC_next = PC_curr;end
+                else  begin PC_next = PC_curr+4;end
             end    //BNE
             3'b100 : begin
                 alu_op = 6'b101010; //op(SLT)
                 if(rvout[0])begin PC_next = PC_curr + imm_val;end
-                else  begin PC_next = PC_curr;end
+                else  begin PC_next = PC_curr+4;end
             end    //BLT
             3'b101 : begin
                 alu_op = 6'b101010; //op(SLT)
                 if (!rvout[0])begin PC_next = PC_curr + imm_val;end 
-                else  begin PC_next = PC_curr;end
+                else  begin PC_next = PC_curr+4;end
             end    //BGE
             3'b110 : begin
                 alu_op = 6'b101011; //op(SLTU)
                 if (rvout[0])begin PC_next = PC_curr + imm_val ;end 
-                else  begin PC_next = PC_curr;end
+                else  begin PC_next = PC_curr+4;end
             end    //BLTU
             3'b111 : begin
                 alu_op = 6'b101011; //op(SLTU)
                 if (!rvout[0]) begin PC_next = PC_curr + imm_val;end
-                else begin PC_next = PC_curr;end 
+                else begin PC_next = PC_curr+4;end 
             end //BGEU
-            default:PC_next = PC_curr;
+            
+            default : begin alu_op = 0; PC_next = PC_curr + 4;end
         endcase
     end
     else if (op[5:3] == 3'b0) begin
         rwe = 1;
+        dwe = 0;
+        dwdata = 0;
+        daddr = 0;
         case(op[2:0])
             3'b100 :  begin
                 alu_op = 6'b001000;   // op(addi)
@@ -175,18 +208,25 @@ reg rwe;
                 PC_next = {rvout[31:1], 1'b0};   //ALU input rv1 thro' control (hardware still simple)
             end   // JALR
             3'b101 :   begin
+                alu_op = 0;
                 reg_wdata = PC_curr + 4;
                 PC_next = PC_curr + imm_val;
             end // JAL
-            3'b010 :begin  reg_wdata = PC_curr + imm_val;end              // AUIPC
-            3'b110 :begin  reg_wdata = imm_val; end // LUI
-            default: begin reg_wdata = 32'b0;
-                PC_next = PC_curr; end            
+            3'b010 :begin  alu_op = 0; PC_next = PC_curr + 4;reg_wdata = PC_curr + imm_val;end              // AUIPC
+            3'b110 :begin  alu_op = 0; PC_next = PC_curr + 4;reg_wdata = imm_val; end // LUI
+            default: begin alu_op = 0; PC_next = PC_curr + 4;reg_wdata = 32'b0;end            
         endcase
     end
     else begin
-        PC_next = PC_curr;
+        PC_next = PC_curr+4;
         reg_wdata = 32'b0;
+        alu_op = 0;
+        rwe = 0;
+        dwe = 0;
+        dwdata = 0;
+        daddr = 0;
+        
+        
     end 
 end // end always block
 endmodule

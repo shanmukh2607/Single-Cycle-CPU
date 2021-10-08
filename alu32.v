@@ -9,7 +9,7 @@ module alu32(
     reg [31:0] val_out;
     always @*  begin
         case (op[4:0])
-            default : val_out = 32'bx; 
+            default : val_out = 32'b0; 
             5'b01000 : val_out = rv1 + rv2;          // ADD, ADDI
             5'b11000 : val_out = rv1 - rv2;          // SUB
             5'b01001 : val_out = {rv1 << {rv2[4:0]}};  // SLL, SLLI

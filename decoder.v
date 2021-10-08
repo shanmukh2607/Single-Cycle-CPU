@@ -26,12 +26,14 @@ module decoder(
         funct3 = instr[14:12];
         funct7 = instr[31:25];
         //
-        if (instr == 32'b0)  op = 6'b0;   // Instr == 00 treated as NOP (no op corr to 6'b0, no changes made)
+        if (instr == 32'b0)  begin op = 6'b0; rv2 = 0;imm_val = 0;end   // Instr == 00 treated as NOP (no op corr to 6'b0, no changes made)
         else if ({instr_opcode[4], instr_opcode[2]} == 2'b10) begin
             // Instruction is ALU type
             op[3] = 1;
             op[5] = instr_opcode[5];  // instruction type: reg (1) or imm (0)
-            op[2:0] = funct3;         // three bits encoding the instruction
+            op[2:0] = funct3; 
+            imm_val = 0;
+            // three bits encoding the instruction
 
             // op[5] behaves like alu_src control signal
             // setting op[4] and rv2
@@ -57,10 +59,12 @@ module decoder(
                 // Load-store instructions
                 op[5] = instr_opcode[5];  // 1: store, 0: LOAD
                 op[2:0] = funct3;         // three bits encoding the instruction
+                imm_val = 0;
                 if (op[5] == 0)begin    rv2 = {{20{instr[31]}}, instr[31:20]};              end // load
                 else             begin  rv2 = {{20{instr[31]}}, instr[31:25], instr[11:7]};  end // store
                 // differentiating between diff types of load and store done by op[2:0] (= funct3)
-            end else begin
+            end 
+            else begin
                 op[5] = ({instr_opcode[6:5], instr_opcode[2]} == 3'b110); // 1: conditional branch, 0: JAL, JALR, AUIPC or LUI
                 if (op[5]) begin    // Conditional Branch Instructions
                     op[2:0] = funct3;         // three bits encoding the instruction
@@ -70,11 +74,11 @@ module decoder(
                 end else begin  // JALR, JAL, LUI, AUIPC
                     op[2:0] = instr_opcode[5:3];
                     case(op[2:0])
-                        3'b100 :  rv2 =  {{20{instr[31]}}, instr[31:20]};             // JALR
-                        3'b101 :  imm_val =  {{11{instr[31]}}, instr[31], instr[19:12], instr[20], instr[30:21], 1'b0}; // JAL
-                        3'b010 :  imm_val = {instr[31:12], 12'b0};    // AUIPC
-                        3'b110 :  imm_val = {instr[31:12], 12'b0};    // LUI
-                        default:  imm_val = 32'b0;
+                        3'b100 :  begin rv2 =  {{20{instr[31]}}, instr[31:20]};imm_val = 32'b0;end             // JALR
+                        3'b101 :  begin rv2 = 32'b0; imm_val =  {{11{instr[31]}}, instr[31], instr[19:12], instr[20], instr[30:21], 1'b0};end // JAL
+                        3'b010 :  begin rv2 = 32'b0;imm_val = {instr[31:12], 12'b0};end     // AUIPC
+                        3'b110 :  begin rv2 = 32'b0;imm_val = {instr[31:12], 12'b0};end    // LUI
+                        default:  begin rv2 = 32'b0;imm_val = 32'b0;end
                         // Don't care about default, if op doesnt match any of the 4 above values, it is illegal
                         // which is taken care of by the default cases in control and alu modules
                     endcase
