@@ -9,7 +9,7 @@ module alu32(
     reg [31:0] val_out;
     always @*  begin
         case (op[4:0])
-            default : val_out = 32'b0; 
+            default : val_out = 32'bx;               // invalid op => output goes to unknown state
             5'b01000 : val_out = rv1 + rv2;          // ADD, ADDI
             5'b11000 : val_out = rv1 - rv2;          // SUB
             5'b01001 : val_out = {rv1 << {rv2[4:0]}};  // SLL, SLLI
@@ -26,7 +26,7 @@ module alu32(
             5'b11101 : val_out = {rv1 >>> {rv2[4:0]}};  // SRA, SRAI
             5'b01110 : val_out = rv1 | rv2;             // OR, ORI
             5'b01111 : val_out = rv1 & rv2;             // AND, ANDI
-                            // invalid op => output goes to unknown state
+                            
         endcase
     end
     assign rvout = val_out;

@@ -75,9 +75,9 @@ module cpu (
 
 //Load DMEM write enable, address and write data to the appropriate ports from output wires of control module
     always @* begin
-        daddr = ~reset & w_daddr;
-        dwdata = ~reset & w_dwdata;
-        dwe = ~reset & w_dwe;
+    daddr = ~reset & w_daddr;
+    dwdata = ~reset & w_dwdata;
+    dwe = ~reset & w_dwe;
     end
 
     always @(posedge clk) begin

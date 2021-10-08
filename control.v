@@ -103,7 +103,7 @@ reg rwe;
                 case(daddr[1:0])    // last two bits of address indicate the byte to be addressed
                     2'b00: begin  reg_wdata = {16'b0, drdata[15:0]}; end//HW 0
                     2'b10:  begin reg_wdata = {16'b0, drdata[31:16]};end //HW 1
-                    default reg_wdata = reg_wdata;
+                    default reg_wdata = 32'b0;
                 endcase
             end         //LHU
             6'b110000 :  begin
@@ -149,17 +149,17 @@ reg rwe;
             default: begin
                 rwe = 0;
                 reg_wdata = 32'b0;
-                dwdata = 32'bx;
-                dwe = 32'bx;end
+                dwdata = 32'b0;
+                dwe = 32'b0;end
 
         endcase
     end // end else
     else if (op[5:3] == 3'b100) begin   // Conditional Branch
         rwe = 0;
          reg_wdata = 32'b0;
-          dwdata = 32'bx;
-          dwe = 32'bx;
-            daddr = 0;
+         dwdata = 32'b0;
+         dwe = 32'b0;
+         daddr = 0;
         
         case (op[2:0])
             3'b000 : begin
@@ -193,7 +193,7 @@ reg rwe;
                 else begin PC_next = PC_curr+4;end 
             end //BGEU
             
-            default : begin alu_op = 0; PC_next = PC_curr + 4;end
+            default : begin alu_op = 0; PC_next = PC_curr + 8;end
         endcase
     end
     else if (op[5:3] == 3'b0) begin
@@ -214,7 +214,7 @@ reg rwe;
             end // JAL
             3'b010 :begin  alu_op = 0; PC_next = PC_curr + 4;reg_wdata = PC_curr + imm_val;end              // AUIPC
             3'b110 :begin  alu_op = 0; PC_next = PC_curr + 4;reg_wdata = imm_val; end // LUI
-            default: begin alu_op = 0; PC_next = PC_curr + 4;reg_wdata = 32'b0;end            
+            default: begin alu_op = 0; PC_next = PC_curr + 8;reg_wdata = 32'b0;end            
         endcase
     end
     else begin

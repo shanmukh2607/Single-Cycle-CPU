@@ -17,6 +17,11 @@ module decoder(
     reg [6:0] funct7;
     reg [31:0] imm_val;
 //  Decode instructions for ALU, Load/Store, Branch and Upper Immediate instructions in RV32I (FENCE and ECALL to be done later)
+    
+    
+    
+    
+    
     always @* begin
         rs1 = instr[19:15];
         rs2 = instr[24:20];
@@ -59,7 +64,7 @@ module decoder(
                 // Load-store instructions
                 op[5] = instr_opcode[5];  // 1: store, 0: LOAD
                 op[2:0] = funct3;         // three bits encoding the instruction
-                imm_val = 0;
+                imm_val = 4;
                 if (op[5] == 0)begin    rv2 = {{20{instr[31]}}, instr[31:20]};              end // load
                 else             begin  rv2 = {{20{instr[31]}}, instr[31:25], instr[11:7]};  end // store
                 // differentiating between diff types of load and store done by op[2:0] (= funct3)
@@ -71,14 +76,15 @@ module decoder(
                     rv2 = r_rv2;              // alu to compute val(rs1) - val(rs2)
                     imm_val = {{19{instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0};
                     // sign_ext(imm[12], imm[11], imm[10:5], imm[4:1], 0)
-                end else begin  // JALR, JAL, LUI, AUIPC
+                end 
+                else begin  // JALR, JAL, LUI, AUIPC
                     op[2:0] = instr_opcode[5:3];
                     case(op[2:0])
-                        3'b100 :  begin rv2 =  {{20{instr[31]}}, instr[31:20]};imm_val = 32'b0;end             // JALR
-                        3'b101 :  begin rv2 = 32'b0; imm_val =  {{11{instr[31]}}, instr[31], instr[19:12], instr[20], instr[30:21], 1'b0};end // JAL
-                        3'b010 :  begin rv2 = 32'b0;imm_val = {instr[31:12], 12'b0};end     // AUIPC
-                        3'b110 :  begin rv2 = 32'b0;imm_val = {instr[31:12], 12'b0};end    // LUI
-                        default:  begin rv2 = 32'b0;imm_val = 32'b0;end
+                        3'b100 :  begin rv2 =  {{20{instr[31]}}, instr[31:20]};imm_val = 8;end             // JALR
+                        3'b101 :  begin rv2 = 8; imm_val =  {{11{instr[31]}}, instr[31], instr[19:12], instr[20], instr[30:21], 1'b0};end // JAL
+                        3'b010 :  begin rv2 = 8;imm_val = {instr[31:12], 12'b0};end     // AUIPC
+                        3'b110 :  begin rv2 = 8;imm_val = {instr[31:12], 12'b0};end    // LUI
+                        default:  begin rv2 = 8;imm_val = 8;end
                         // Don't care about default, if op doesnt match any of the 4 above values, it is illegal
                         // which is taken care of by the default cases in control and alu modules
                     endcase
