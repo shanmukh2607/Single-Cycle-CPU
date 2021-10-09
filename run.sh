@@ -67,7 +67,6 @@ else
 fi
 
 cat << EOF
-
 You should see a PASS message and all tests pass.
 If any test reports as a FAIL, fix it before submitting.
 Once all tests pass, commit the changes into your code,
