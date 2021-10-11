@@ -1,3 +1,4 @@
+regfile.v
 cpu.v
 cpu_tb.v
 dmem.v
